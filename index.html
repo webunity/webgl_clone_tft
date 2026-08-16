@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <title>clone_tft</title>
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <main id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=960 height=540 tabindex="-1"></canvas>
+      <div id="unity-loading-bar" role="status" aria-live="polite">
+        <div id="unity-logo">clone_tft</div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"></div>
+      <button id="unity-fullscreen-button" type="button" aria-label="Enter fullscreen"></button>
+    </main>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var unityContainer = document.querySelector("#unity-container");
+
+      function resizeUnityContainer() {
+        var bodyStyle = window.getComputedStyle(document.body);
+        var containerStyle = window.getComputedStyle(unityContainer);
+        var horizontalBorder = parseFloat(containerStyle.borderLeftWidth) + parseFloat(containerStyle.borderRightWidth);
+        var verticalBorder = parseFloat(containerStyle.borderTopWidth) + parseFloat(containerStyle.borderBottomWidth);
+        var horizontalPadding = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
+        var verticalPadding = parseFloat(bodyStyle.paddingTop) + parseFloat(bodyStyle.paddingBottom);
+        var availableWidth = Math.max(1, window.innerWidth - horizontalPadding - horizontalBorder);
+        var availableHeight = Math.max(1, window.innerHeight - verticalPadding - verticalBorder);
+        var canvasWidth = Math.min(availableWidth, availableHeight * 16 / 9);
+        var canvasHeight = canvasWidth * 9 / 16;
+
+        unityContainer.style.width = Math.floor(canvasWidth + horizontalBorder) + "px";
+        unityContainer.style.height = Math.floor(canvasHeight + verticalBorder) + "px";
+      }
+
+      function unityShowBanner(message, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        var banner = document.createElement("div");
+
+        banner.textContent = message;
+        banner.className = "unity-banner " + (type || "info");
+        warningBanner.appendChild(banner);
+        warningBanner.style.display = "block";
+
+        if (type !== "error") {
+          setTimeout(function() {
+            banner.remove();
+            warningBanner.style.display = warningBanner.children.length ? "block" : "none";
+          }, 5000);
+        }
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/clone_tft.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/clone_tft.data.unityweb",
+        frameworkUrl: buildUrl + "/clone_tft.framework.js.unityweb",
+        codeUrl: buildUrl + "/clone_tft.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "duyongoc",
+        productName: "clone_tft",
+        productVersion: "0.1",
+        showBanner: unityShowBanner,
+      };
+
+      canvas.setAttribute("aria-label", config.productName);
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        document.body.classList.add("unity-mobile-page");
+        unityContainer.className = "unity-mobile";
+        canvas.className = "unity-mobile";
+      }
+
+      resizeUnityContainer();
+      window.addEventListener("resize", resizeUnityContainer);
+
+      document.querySelector("#unity-loading-bar").style.display = "grid";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = function() {
+        createUnityInstance(canvas, config, function(progress) {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then(function(unityInstance) {
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          document.querySelector("#unity-fullscreen-button").onclick = function() {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch(function(message) {
+          unityShowBanner(message, "error");
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
